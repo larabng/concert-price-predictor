@@ -1,3 +1,14 @@
+---
+title: Concert Ticket Price Predictor
+emoji: 🎵
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: 1.44.0
+app_file: app/streamlit_app.py
+pinned: false
+---
+
 # Concert Ticket Price Predictor
 
 A machine learning project combining **structured data ML** (Random Forest & XGBoost)

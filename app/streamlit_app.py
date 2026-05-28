@@ -18,6 +18,12 @@ import plotly.express as px
 import seaborn as sns
 import streamlit as st
 
+try:
+    import torch  # noqa: F401
+    TRANSFORMER_AVAILABLE = True
+except ImportError:
+    TRANSFORMER_AVAILABLE = False
+
 SRC = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(SRC))
 
@@ -126,11 +132,15 @@ def tab_predictor():
                 ["XGB_nlp", "RF_nlp", "XGB_base", "RF_base"],
                 help="*_nlp models include NLP features from the artist bio.",
             )
-            use_transformer = st.checkbox(
-                "Use DistilBERT for sentiment (Approach A, slower)",
-                value=False,
-                help="Unchecked = keyword heuristic (Approach B, fast).",
-            )
+            if TRANSFORMER_AVAILABLE:
+                use_transformer = st.checkbox(
+                    "Use DistilBERT for sentiment (Approach A, slower)",
+                    value=False,
+                    help="Unchecked = keyword heuristic (Approach B, fast).",
+                )
+            else:
+                use_transformer = False
+                st.caption("ℹ️ Approach A (DistilBERT) not available in this deployment — using keyword heuristic.")
 
         bio = st.text_area(
             "Artist Wikipedia biography (for NLP sentiment & hype scoring)",

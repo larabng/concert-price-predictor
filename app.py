@@ -117,19 +117,21 @@ def tab_predictor():
         uploaded_img = st.file_uploader("Artist or concert photo", type=["jpg", "jpeg", "png"], key="cv_upload")
         cv_genre, cv_conf = None, None
         if uploaded_img is not None:
+            import io
             from PIL import Image as PILImage
-            img = PILImage.open(uploaded_img)
+            img_bytes = uploaded_img.read()          # read once into bytes
+            img = PILImage.open(io.BytesIO(img_bytes))
             col_img, col_result = st.columns([1, 2])
             with col_img:
                 st.image(img, width=200)
             with col_result:
                 with st.spinner("CLIP is analysing the image…"):
-                    cv_genre, cv_conf = classify_genre(uploaded_img.getvalue())
+                    cv_genre, cv_conf = classify_genre(img_bytes)  # reuse same bytes
                 if cv_genre:
                     st.success(f"Detected genre: **{cv_genre}** ({cv_conf:.0%} confidence)")
                     st.caption("The genre field below has been pre-filled. You can change it if needed.")
                 else:
-                    st.warning("Genre detection unavailable (HF token needed). Please select genre manually.")
+                    st.warning("Genre detection unavailable — check HF_TOKEN secret or select genre manually.")
 
     with st.form("predictor_form"):
         col1, col2, col3 = st.columns(3)

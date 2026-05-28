@@ -290,14 +290,40 @@ The app auto-trains models on first launch if `data/models/` is empty.
 ## 5. Optional Bonus Evidence
 
 - [ ] Third selected block implemented with strong quality
-- [x] More than two data sources used with clear added value — two genuinely different external sources (structured CSV from GitHub + Wikipedia REST API)
-- [x] A core section is done exceptionally well — clear NLP approach comparison (Approach A vs B) with qualitative and quantitative evaluation
+- [x] More than two data sources used with clear added value
+- [x] A core section is done exceptionally well — NLP with three approaches (DistilBERT / keyword / GPT-3.5-turbo)
 - [ ] Extended evaluation
-- [ ] Ethics, bias, or fairness analysis
+- [x] Ethics, bias, or fairness analysis
 - [ ] Creative or exceptional use case
 
 **Evidence for selected bonus items:**
 
+---
+
 **Multiple data sources:** `concerts.csv` (tabular, 1,198 rows, real USD prices from Ticketmaster data) and `wiki_bios_cache.csv` (text, 87 Wikipedia summaries fetched via REST API). They are different in type, origin, and granularity, and are merged on the `artist` key. See [`src/data_loader.py`](../src/data_loader.py).
 
-**NLP comparison:** Two NLP approaches are implemented, compared qualitatively (score distributions, representative examples) and quantitatively (RMSE improvement when each is used as ML input). Approach B is selected with documented reasoning. See [`notebooks/02_nlp_preprocessing.ipynb`](../notebooks/02_nlp_preprocessing.ipynb) and [`src/nlp_features.py`](../src/nlp_features.py).
+**NLP comparison:** Three NLP approaches implemented: Approach A (DistilBERT sentiment), Approach B (keyword heuristic for ML features), Approach C (GPT-3.5-turbo for natural-language explanation). Compared qualitatively and quantitatively. See [`src/nlp_features.py`](../src/nlp_features.py) and [`src/llm_explanation.py`](../src/llm_explanation.py).
+
+---
+
+**Ethics, Bias & Fairness Analysis:**
+
+**1. Geographic and cultural bias (training data)**
+The dataset contains only US concerts (cities like New York, Chicago, Los Angeles). The model has never seen European, Asian, or Latin American concert markets. Applying it to Swiss or German events will likely underestimate prices in premium markets (e.g. Zurich, Geneva) and overestimate them in lower-income markets. Users outside the US should treat predictions as rough estimates, not precise forecasts.
+
+**2. Artist representation bias (Wikipedia coverage)**
+53 out of 87 artists in the dataset have real Wikipedia biographies; the remaining 34 receive an identical default bio. These 34 artists — often less mainstream or international acts — receive identical NLP scores regardless of their actual market standing. This creates a systematic underestimation of NLP signal for less-documented artists, and may slightly underpredict prices for niche acts that lack Wikipedia coverage.
+
+**3. Genre imbalance**
+Rock (449 rows, 37%) and Hip-Hop/Rap (270 rows, 22%) dominate the dataset. Underrepresented genres — Classical (1 row), Folk (2), Comedy (5) — have insufficient training examples, making price predictions for these genres unreliable. The model should not be used for event types far outside the Rock/Country/Hip-Hop mainstream.
+
+**4. Temporal bias**
+The training data reflects US concert prices from approximately 2017–2018. Concert ticket prices have risen significantly since then (average increase ~40% 2018–2024 due to inflation and post-COVID demand surge). The model will systematically underpredict current prices. The `year` feature is absent from this dataset, so temporal adjustment is not possible without retraining on newer data.
+
+**5. Price floor vs. fair price**
+The model predicts the *minimum* ticket price (cheapest available seat). This is not the same as the fair market price or the median ticket cost. Consumers using this prediction to judge whether a ticket is "fairly priced" must understand that the predicted floor price does not account for premium seating, VIP packages, or surge pricing — all of which can multiply the minimum price by 5–10x for major acts like Taylor Swift or Beyoncé.
+
+**6. Fairness implications**
+A model that underestimates prices for certain genres or geographies could lead fans to make uninformed decisions (e.g., dismissing a "fairly priced" ticket that appears overpriced relative to a biased prediction). Future work should: (a) collect a globally representative dataset, (b) disaggregate performance metrics by genre and city size, and (c) report confidence intervals alongside point predictions to communicate uncertainty.
+
+See [`src/data_loader.py`](../src/data_loader.py) for data origin and [`notebooks/01_eda.ipynb`](../notebooks/01_eda.ipynb) for genre/city distribution analysis.

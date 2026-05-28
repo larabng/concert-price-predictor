@@ -159,11 +159,12 @@ See *Residual Analysis* in [`notebooks/03_modeling.ipynb`](../notebooks/03_model
 
 #### 2B.3 Approach Selection
 
-- **Approach used:** Two approaches compared:
-  - **Approach A (Transformer):** `distilbert-base-uncased-finetuned-sst-2-english` — pre-trained SST-2 sentiment classifier via HuggingFace `pipeline`. Returns confidence-weighted score ∈ [-1, 1].
-  - **Approach B (Keyword heuristic):** Counts occurrences of 20 domain-specific positive words (e.g., *acclaimed*, *legendary*, *grammy*, *influential*) normalised to [0, 1].
-  - **Hype score (shared):** Counts 26 prestige keywords (e.g., *world-class*, *sold-out*, *best-selling*) normalised to [0, 1].
-- **Alternatives considered:** Zero-shot classification, TF-IDF + cosine similarity — rejected as overkill for short (~200-char) bios.
+- **Approach used:** Three approaches implemented:
+  - **Approach A (Transformer):** `distilbert-base-uncased-finetuned-sst-2-english` — pre-trained SST-2 sentiment classifier, produces score ∈ [-1, 1] for ML feature extraction.
+  - **Approach B (Keyword heuristic):** Counts 20 domain-specific positive words normalised to [0, 1] — fast, no GPU needed, default for ML features.
+  - **Approach C (LLM — GPT-3.5-turbo):** OpenAI Chat API called at inference time with artist name, predicted price, top ML feature importances, and Wikipedia bio as context. Generates a 2-sentence natural-language explanation displayed in the app UI.
+  - **Hype score (shared):** Counts 26 prestige keywords normalised to [0, 1].
+- **Alternatives considered:** Zero-shot classification, TF-IDF — rejected for short bios. Mistral-7B via HF Inference API — tested, GPT-3.5-turbo preferred for explanation quality.
 
 See [`src/nlp_features.py`](../src/nlp_features.py).
 
@@ -172,8 +173,8 @@ See [`src/nlp_features.py`](../src/nlp_features.py).
 | Iteration | Objective | Key changes | Model or prompt setup | Main metric or qualitative check | Change vs previous |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Establish baseline NLP | Approach B (keyword) only | 20 positive words, normalised count | Qualitative: variation in scores across artists | — |
-| 2 | Add transformer comparison | Approach A (DistilBERT) on same bios | distilbert-base-uncased-finetuned-sst-2-english | Qualitative: score range & differentiation; ML RMSE impact | Approach A gives less variation (nearly all bios score 0.95+) |
-| 3 | Select best approach for deployment | Approach B selected as default | Keyword list refined to 20 terms | ML RMSE improvement vs base; deployment speed | Approach B: faster, better differentiation, comparable ML improvement |
+| 2 | Add transformer comparison | Approach A (DistilBERT) on same bios | distilbert-base-uncased-finetuned-sst-2-english | Score range & ML RMSE impact | Approach A less variation (0.95+ for all); Approach B preferred for ML features |
+| 3 | Add LLM explanation | Approach C (GPT-3.5-turbo) for natural language generation | OpenAI Chat API, 2-sentence prompt with price + features + bio | Qualitative: explanation quality & relevance | GPT output clearly more natural and specific than rule-based explanation |
 
 See *Approach Comparison* in [`notebooks/02_nlp_preprocessing.ipynb`](../notebooks/02_nlp_preprocessing.ipynb#4-approach-comparison-transformer-a-vs-keyword-b).
 

@@ -1,27 +1,22 @@
 """
 cv_classifier.py — Computer Vision block: CLIP-based music genre classification.
 
-Uses openai/clip-vit-base-patch32 via the HuggingFace Inference API (zero-shot)
-to classify an artist/concert photo into one of 8 music genres.
+Uses openai/clip-vit-base-patch32 loaded locally via transformers (zero-shot).
+No HF Inference API or token required — model downloads on first run (~350 MB).
 
-Integration with other blocks:
-  Output (predicted genre) → replaces the genre dropdown in the ML Price Predictor
-  This means CV block output directly feeds into the ML block as an input feature.
-
-No local model required — runs via HF Inference API using the HF_TOKEN secret.
+Integration: predicted genre pre-fills the genre dropdown in the ML Price Predictor.
 """
 
 from __future__ import annotations
 
 import io
 import os
-import time
 import urllib.request
+from functools import lru_cache
 from typing import Optional
 
 from PIL import Image
 
-# Maps our dataset genre labels to descriptive CLIP text prompts
 GENRE_LABELS = [
     "Rock", "Hip-Hop/Rap", "Country", "R&B",
     "Metal", "Pop", "Dance/Electronic", "Other",
@@ -39,98 +34,61 @@ GENRE_PROMPTS = {
 }
 
 
-def preprocess_image(image_input) -> bytes:
-    """Convert uploaded image to bytes for the HF API.
+@lru_cache(maxsize=1)
+def _load_clip():
+    from transformers import CLIPProcessor, CLIPModel
+    model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    return model, processor
 
-    Accepts a PIL Image, file-like object, or raw bytes.
-    Resizes to 224x224 and converts to RGB.
-    """
+
+def preprocess_image(image_input) -> Image.Image:
     if isinstance(image_input, bytes):
         img = Image.open(io.BytesIO(image_input))
     elif isinstance(image_input, Image.Image):
         img = image_input
     else:
         img = Image.open(image_input)
-
-    img = img.convert("RGB").resize((224, 224), Image.LANCZOS)
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=90)
-    return buf.getvalue()
+    return img.convert("RGB")
 
 
 def classify_genre(
     image_input,
     token: Optional[str] = None,
 ) -> tuple[str | None, float | None]:
-    """Classify a concert/artist image into a music genre using CLIP.
+    """Classify a concert/artist image into a music genre using local CLIP.
 
-    Parameters
-    ----------
-    image_input:
-        PIL Image, file-like object, or raw bytes.
-    token:
-        HuggingFace API token. Auto-read from HF_TOKEN env var if not provided.
-
-    Returns
-    -------
-    (genre, confidence) tuple, or (None, None) if unavailable.
+    Returns (genre, confidence) or raises on error.
+    token parameter kept for API compatibility but not used.
     """
-    if token is None:
-        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
-    if not token:
-        try:
-            from huggingface_hub import get_token
-            token = get_token()
-        except Exception:
-            return None, None
-    if not token:
-        return None, None
+    import torch
 
-    try:
-        from huggingface_hub import InferenceClient
-        image_bytes = preprocess_image(image_input)
-        client = InferenceClient(token=token)
-        results = client.zero_shot_image_classification(
-            image=image_bytes,
-            candidate_labels=list(GENRE_PROMPTS.values()),
-            model="openai/clip-vit-base-patch32",
-        )
-        # Map back from prompt text to genre label
-        prompt_to_genre = {v: k for k, v in GENRE_PROMPTS.items()}
-        if results:
-            top = results[0]
-            # huggingface_hub returns objects with .label/.score OR dicts
-            label = top.label if hasattr(top, "label") else top.get("label", "")
-            score = top.score if hasattr(top, "score") else top.get("score", 0.0)
-            genre = prompt_to_genre.get(label, "Other")
-            confidence = round(float(score), 4)
-            return genre, confidence
-    except Exception:
-        raise
+    model, processor = _load_clip()
+    img = preprocess_image(image_input)
+    prompts = list(GENRE_PROMPTS.values())
 
-    return None, None
+    inputs = processor(text=prompts, images=img, return_tensors="pt", padding=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        probs = outputs.logits_per_image.softmax(dim=1)[0]
+
+    top_idx = int(probs.argmax())
+    prompt_to_genre = {v: k for k, v in GENRE_PROMPTS.items()}
+    genre = prompt_to_genre[prompts[top_idx]]
+    confidence = round(float(probs[top_idx]), 4)
+    return genre, confidence
 
 
 def fetch_artist_thumbnail(artist: str) -> Optional[bytes]:
-    """Fetch the Wikipedia thumbnail image for an artist (for evaluation).
-
-    Parameters
-    ----------
-    artist:
-        Artist name as used in the dataset.
-
-    Returns
-    -------
-    Raw image bytes, or None if no thumbnail is found.
-    """
+    """Fetch the Wikipedia thumbnail image for an artist (for evaluation)."""
     import json
     import urllib.parse
 
     overrides = {
-        "Maroon":           "Maroon_5",
-        "P!nk":             "Pink_(singer)",
+        "Maroon":              "Maroon_5",
+        "P!nk":                "Pink_(singer)",
         "Panic! At The Disco": "Panic!_at_the_Disco",
-        "Ty Dolla $ign":    "Ty_Dolla_Sign",
+        "Ty Dolla $ign":       "Ty_Dolla_Sign",
     }
     title = overrides.get(artist, artist.replace(" ", "_"))
     url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title)}"

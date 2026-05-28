@@ -263,7 +263,7 @@ See [`src/cv_classifier.py`](../src/cv_classifier.py) and [`app.py`, `tab_predic
 ![Price Predictor](../screenshots/predictor.jpg)
 
 **CV Block — CLIP genre detection from uploaded artist photo:**
-![CLIP Genre Detection](../screenshots/predictor.jpg)
+![CLIP Genre Detection](../screenshots/clip.jpg)
 
 **Budget Planner — genre × month heatmap with artist suggestions:**
 ![Budget Planner](../screenshots/budget.jpg)

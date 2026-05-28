@@ -61,7 +61,7 @@ def preprocess_image(image_input) -> bytes:
 def classify_genre(
     image_input,
     token: Optional[str] = None,
-) -> tuple[str, float] | tuple[None, None]:
+) -> tuple[str | None, float | None]:
     """Classify a concert/artist image into a music genre using CLIP.
 
     Parameters
@@ -99,12 +99,12 @@ def classify_genre(
         prompt_to_genre = {v: k for k, v in GENRE_PROMPTS.items()}
         if results:
             top = results[0]
-            genre = prompt_to_genre.get(top["label"], "Other")
-            confidence = round(float(top["score"]), 4)
+            # huggingface_hub returns objects with .label/.score OR dicts
+            label = top.label if hasattr(top, "label") else top.get("label", "")
+            score = top.score if hasattr(top, "score") else top.get("score", 0.0)
+            genre = prompt_to_genre.get(label, "Other")
+            confidence = round(float(score), 4)
             return genre, confidence
-    except Exception:
-        pass
-
     return None, None
 
 

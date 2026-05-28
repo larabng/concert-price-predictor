@@ -10,20 +10,21 @@ pinned: false
 
 # Concert Ticket Price Predictor
 
-A machine learning project combining **structured data ML** (Random Forest & XGBoost)
-with **NLP analysis of Wikipedia artist biographies** (DistilBERT & keyword heuristic)
-to predict minimum concert ticket prices in USD.
+A machine learning project combining **structured data ML** (Random Forest & XGBoost),
+**NLP analysis of Wikipedia artist biographies** (DistilBERT & keyword heuristic & GPT-3.5),
+and **Computer Vision genre detection** (CLIP zero-shot) to predict minimum concert ticket prices in USD and CHF.
 
-Built as part of the AI Applications course (FS26).
+Built as part of the AI Applications course (FS26, ZHAW).
 
 ---
 
-## Two Real Data Sources
+## Three Data Sources
 
 | # | Source | Type | Size | Role |
 |---|---|---|---|---|
 | 1 | [Ticketmaster price dataset](https://github.com/ethanjaredlee/ticketmaster-price-ml) | CSV (structured) | 1,198 rows | Concert features + real ticket prices |
-| 2 | [Wikipedia artist bios](https://en.wikipedia.org/api/rest_v1/) | Text (REST API) | 87 artist summaries | NLP sentiment & hype features |
+| 2 | [Wikipedia artist bios & photos](https://en.wikipedia.org/api/rest_v1/) | Text + Images (REST API) | 87 artist summaries | NLP sentiment & hype features; CV evaluation thumbnails |
+| 3 | [Frankfurter Exchange Rate API](https://api.frankfurter.app) | JSON (live) | 1 value (USD→CHF) | Live currency conversion for CHF display |
 
 ---
 
@@ -37,18 +38,21 @@ kiprojekt/
 │   └── models/                  ← trained models (generated, not committed)
 ├── notebooks/
 │   ├── 01_eda.ipynb             ← EDA on real concert data
-│   ├── 02_nlp_preprocessing.ipynb  ← NLP approach comparison (A vs B)
-│   └── 03_modeling.ipynb        ← Model training & evaluation
+│   ├── 02_nlp_preprocessing.ipynb  ← NLP approach comparison (A vs B vs C)
+│   ├── 03_modeling.ipynb        ← Model training & 5-fold CV evaluation
+│   └── 04_cv_evaluation.ipynb   ← CLIP zero-shot evaluation on artist thumbnails
 ├── src/
-│   ├── data_loader.py           ← load + merge both data sources
-│   ├── nlp_features.py          ← Approach A (DistilBERT) + Approach B (keyword)
+│   ├── data_loader.py           ← load + merge all data sources
+│   ├── nlp_features.py          ← Approach A (DistilBERT) + B (keyword) + C (GPT-3.5)
+│   ├── cv_classifier.py         ← CLIP zero-shot genre classification
+│   ├── llm_explanation.py       ← GPT-3.5 price explanation generator
+│   ├── exchange_rate.py         ← live USD→CHF conversion (Frankfurter API)
 │   ├── model.py                 ← RF & XGBoost training pipeline
 │   └── predict.py               ← single-event inference
-├── app/
-│   └── app.py         ← interactive web UI
+├── app.py                       ← interactive web UI (3 tabs)
 ├── docs/
 │   └── documentation.md         ← full project documentation
-├── .streamlit/config.toml
+├── Dockerfile
 ├── requirements.txt
 └── .gitignore
 ```
@@ -80,7 +84,7 @@ python src/model.py         # trains RF_base, RF_nlp, XGB_base, XGB_nlp
 ### 4. Run the app
 
 ```bash
-streamlit run app/app.py
+streamlit run app.py
 ```
 
 Models are auto-trained on first launch if absent.
@@ -92,7 +96,7 @@ cd notebooks
 jupyter notebook
 ```
 
-Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.ipynb`
+Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.ipynb` → `04_cv_evaluation.ipynb`
 
 ---
 
@@ -111,6 +115,7 @@ Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.i
 | `hype_score` | NLP prestige keyword density |
 
 **Models compared:** RF (200 trees) vs XGBoost (300 estimators) × base/NLP = 4 models  
+**Extended evaluation:** 5-fold cross-validation (mean ± std) for all 4 models  
 **Target:** `minprice` (USD, real ticket prices)
 
 ### Block 2 — NLP
@@ -118,12 +123,21 @@ Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.i
 - **Text data:** Wikipedia artist biographies (Source 2, fetched via REST API)
 - **Approach A:** DistilBERT (`distilbert-base-uncased-finetuned-sst-2-english`) — transformer sentiment
 - **Approach B:** Keyword heuristic — count of 20 prestige/positive terms, normalised to [0, 1]
-- **Comparison:** Approach B selected (more score variation, faster, no GPU needed)
-- **Integration:** Both NLP scores become numeric features for the ML model
+- **Approach C:** GPT-3.5-turbo — natural-language price explanation at inference time
+- **Comparison:** Approach B selected for ML features (more score variation, faster, no GPU needed)
+- **Integration:** NLP scores become numeric features for the ML model; GPT explanation shown in UI
+
+### Block 3 — Computer Vision
+
+- **Model:** `openai/clip-vit-base-patch32` loaded locally via `transformers` (zero-shot)
+- **Input:** User-uploaded artist/concert photo
+- **Output:** Predicted music genre (one of 8), pre-fills genre dropdown in the Price Predictor
+- **Prompts:** Descriptive sentences per genre (e.g. "a pop music star performing on stage")
+- **Evaluation:** Top-1 accuracy on 12 artists with Wikipedia thumbnails — see `04_cv_evaluation.ipynb`
 
 ---
 
-## Results (example run)
+## Results
 
 | Model | RMSE (USD) | MAE (USD) | R² |
 |---|---|---|---|
@@ -132,7 +146,7 @@ Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.i
 | XGB_base | 90.8 | 18.1 | 0.526 |
 | **XGB_nlp** | 91.6 | **18.1** | 0.517 |
 
-> Note: RMSE is inflated by rare VIP/premium tickets ($500–$2,999). MAE of ~$18 is the typical absolute prediction error. Model trained on log(price) for better handling of the skewed price distribution.
+> Note: RMSE is inflated by rare VIP/premium tickets ($500–$2,999). MAE of ~$18 is the typical absolute prediction error.
 
 ---
 
@@ -140,22 +154,16 @@ Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.i
 
 Deployed at: **https://huggingface.co/spaces/banlar01/concert-price-predictor**
 
-To deploy yourself:
-1. Push repo to GitHub
-2. Go to [streamlit.io/cloud](https://streamlit.io/cloud) → New app
-3. Select repo + `app/app.py`
-4. Deploy (auto-trains on first run, ~30–60 s)
-
 ---
 
 ## Dependencies
 
-- `pandas`, `numpy`, `scikit-learn`, `xgboost` — data and modeling
-- `transformers`, `torch` — DistilBERT (Approach A, optional)
+- `pandas`, `numpy`, `scikit-learn`, `xgboost` — data and modelling
+- `transformers`, `torch` — DistilBERT (NLP Approach A) + CLIP (CV block)
+- `openai` — GPT-3.5-turbo explanation (NLP Approach C)
 - `streamlit`, `plotly` — interactive UI
 - `matplotlib`, `seaborn` — EDA visualisations
 - `joblib` — model persistence
-- `tqdm` — progress bars
 
 ---
 

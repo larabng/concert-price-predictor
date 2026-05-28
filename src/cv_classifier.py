@@ -105,6 +105,9 @@ def classify_genre(
             genre = prompt_to_genre.get(label, "Other")
             confidence = round(float(score), 4)
             return genre, confidence
+    except Exception:
+        raise
+
     return None, None
 
 

@@ -45,7 +45,7 @@ kiprojekt/
 │   ├── model.py                 ← RF & XGBoost training pipeline
 │   └── predict.py               ← single-event inference
 ├── app/
-│   └── streamlit_app.py         ← interactive web UI
+│   └── app.py         ← interactive web UI
 ├── docs/
 │   └── documentation.md         ← full project documentation
 ├── .streamlit/config.toml
@@ -80,7 +80,7 @@ python src/model.py         # trains RF_base, RF_nlp, XGB_base, XGB_nlp
 ### 4. Run the Streamlit app
 
 ```bash
-streamlit run app/streamlit_app.py
+streamlit run app/app.py
 ```
 
 Models are auto-trained on first launch if absent.
@@ -143,7 +143,7 @@ Deployed at: **https://huggingface.co/spaces/banlar01/concert-price-predictor**
 To deploy yourself:
 1. Push repo to GitHub
 2. Go to [streamlit.io/cloud](https://streamlit.io/cloud) → New app
-3. Select repo + `app/streamlit_app.py`
+3. Select repo + `app/app.py`
 4. Deploy (auto-trains on first run, ~30–60 s)
 
 ---

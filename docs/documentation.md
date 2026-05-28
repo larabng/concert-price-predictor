@@ -202,14 +202,14 @@ See the full pipeline in [`src/predict.py`, lines 45–80](../src/predict.py#L45
   5. App displays predicted price, NLP scores, natural-language explanation, feature importances
   6. "Model Insights" tab shows EDA charts, NLP comparison, model comparison table, feature importances
 
-- **Screenshots:** Run `streamlit run app/streamlit_app.py` locally to capture.
+- **Screenshots:** Run `streamlit run app/app.py` locally to capture.
 
 ### How to Deploy to Streamlit Cloud
 
 1. Push this repository to GitHub (public or private).
 2. Add collaborators `jasminh` and `bkuehnis`.
 3. Go to [streamlit.io/cloud](https://streamlit.io/cloud) → "New app".
-4. Select your repo, branch `main`, main file `app/streamlit_app.py`.
+4. Select your repo, branch `main`, main file `app/app.py`.
 5. Click "Deploy". The app auto-trains models on first launch (~30–60s).
 6. Copy the deployment URL and add it to this document and the GitHub repo description.
 
@@ -250,7 +250,7 @@ jupyter notebook            # open and run: 01_eda → 02_nlp_preprocessing → 
 ### Run the app
 
 ```bash
-streamlit run app/streamlit_app.py
+streamlit run app/app.py
 ```
 
 The app auto-trains models on first launch if `data/models/` is empty.

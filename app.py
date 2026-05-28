@@ -1,5 +1,5 @@
 """
-streamlit_app.py — Concert Ticket Price Predictor (interactive web UI).
+app.py — Concert Ticket Price Predictor (interactive web UI).
 
 Two tabs:
   1. Price Predictor  — input concert details → predicted price + NLP explanation

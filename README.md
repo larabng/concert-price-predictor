@@ -77,7 +77,7 @@ python src/data_loader.py   # downloads concerts.csv + wiki_bios_cache.csv
 python src/model.py         # trains RF_base, RF_nlp, XGB_base, XGB_nlp
 ```
 
-### 4. Run the Streamlit app
+### 4. Run the app
 
 ```bash
 streamlit run app/app.py

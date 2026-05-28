@@ -1,9 +1,10 @@
 """
 app.py — Concert Ticket Price Predictor (interactive web UI).
 
-Two tabs:
-  1. Price Predictor  — input concert details → predicted price + NLP explanation
-  2. Model Insights   — EDA charts, NLP analysis, model comparison, feature importances
+Three tabs:
+  1. Price Predictor   — CV genre detection + ML price prediction + GPT explanation
+  2. Budget Planner    — heatmap + artist suggestions for a given CHF budget
+  3. Model Insights    — EDA charts, NLP comparison, model metrics, feature importances
 """
 
 from __future__ import annotations
@@ -577,6 +578,29 @@ def tab_budget_planner():
                     st.warning(f"AI recommendation unavailable: {e}")
             else:
                 st.warning("OpenAI key not configured.")
+
+    # ── Artist suggestions from real dataset ─────────────────────────────────
+    st.subheader(f"🎤 Artist Suggestions within CHF {budget_chf}")
+    st.caption("Real artists from the training dataset whose predicted price fits your budget.")
+
+    from predict import batch_predict
+    real_df = get_enriched_data().copy()
+    real_df["pred_chf_real"] = (batch_predict(real_df, "XGB_nlp")["predicted_price"] * rate).round(0)
+    within = (
+        real_df[real_df["pred_chf_real"] <= budget_chf]
+        .sort_values("pred_chf_real", ascending=False)
+        .drop_duplicates("artist")
+        [["artist", "genre", "pred_chf_real", "score"]]
+        .head(10)
+        .rename(columns={"artist": "Artist", "genre": "Genre",
+                          "pred_chf_real": "Est. min. price (CHF)",
+                          "score": "Popularity score"})
+        .reset_index(drop=True)
+    )
+    if within.empty:
+        st.info("No known artists fit this budget. Try raising it slightly.")
+    else:
+        st.dataframe(within, use_container_width=True)
 
     # ── City comparison bar chart ─────────────────────────────────────────────
     st.subheader("Price vs City Size — July, Most Popular Genre per City")

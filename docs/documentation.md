@@ -344,7 +344,7 @@ The app auto-trains models on first launch if `data/models/` is empty.
 - [x] A core section is done exceptionally well — NLP with three approaches (DistilBERT / keyword / GPT-3.5-turbo)
 - [x] Extended evaluation — 5-fold cross-validation with mean ± std for all 4 models
 - [x] Ethics, bias, or fairness analysis
-- [ ] Creative or exceptional use case
+- [x] Creative or exceptional use case — Budget Planner: CHF-budget input → genre×month heatmap + real artist suggestions + GPT recommendation. Unique feature not found on any ticketing platform.
 
 **Evidence for selected bonus items:**
 

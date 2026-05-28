@@ -202,16 +202,31 @@ See the full pipeline in [`src/predict.py`, lines 45–80](../src/predict.py#L45
   5. App displays predicted price, NLP scores, natural-language explanation, feature importances
   6. "Model Insights" tab shows EDA charts, NLP comparison, model comparison table, feature importances
 
-- **Screenshots:** Run `streamlit run app/app.py` locally to capture.
+- **Screenshots — key analysis outputs:**
 
-### How to Deploy to Streamlit Cloud
+**Price Distribution (EDA):**
+![Price Distribution](../data/plot_price_dist.png)
 
-1. Push this repository to GitHub (public or private).
-2. Add collaborators `jasminh` and `bkuehnis`.
-3. Go to [streamlit.io/cloud](https://streamlit.io/cloud) → "New app".
-4. Select your repo, branch `main`, main file `app/app.py`.
-5. Click "Deploy". The app auto-trains models on first launch (~30–60s).
-6. Copy the deployment URL and add it to this document and the GitHub repo description.
+**Artist Score vs Ticket Price:**
+![Score vs Price](../data/plot_numeric_features.png)
+
+**Feature Correlation Matrix:**
+![Correlation Matrix](../data/plot_correlation.png)
+
+**NLP Score Distributions (Approach B):**
+![NLP Distributions](../data/plot_nlp_distributions.png)
+
+**NLP Scores vs Price:**
+![NLP vs Price](../data/plot_nlp_vs_price.png)
+
+**Model Comparison (RMSE / MAE / R²):**
+![Model Comparison](../data/plot_model_comparison.png)
+
+**Feature Importances — XGBoost + NLP:**
+![Feature Importances](../data/plot_feature_importances.png)
+
+**Residual Analysis:**
+![Residuals](../data/plot_residuals.png)
 
 ---
 

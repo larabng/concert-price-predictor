@@ -59,6 +59,12 @@ Reference to multiple lines in `train.py`, lines 15-38:
 - **Problem statement:** Concert ticket prices are opaque to consumers — the same event can cost vastly different amounts depending on the artist's reputation, city, timing, and genre. There is no simple formula a fan can use to judge whether a ticket is fairly priced.
 - **Goal:** Build a model that predicts the minimum ticket price for a concert given structured event metadata and a natural-language artist biography, combining structured ML prediction with NLP-derived artist prestige signals.
 - **Success criteria:** XGBoost + NLP model achieves R² > 0.30 on held-out test data; NLP features demonstrably improve over the base model; the deployed app produces sensible price estimates with natural-language explanations.
+- **Scope:** The system predicts the *minimum* ticket price (face value floor) for a single concert event based on artist metadata and bio text. It does not predict resale prices, VIP tiers, or dynamic pricing fluctuations.
+- **Assumptions:**
+  - Artist popularity score (0–100) is a stable proxy for market demand.
+  - Wikipedia biography text reflects the artist's public reputation and prestige at the time of data collection.
+  - The training dataset (US concerts, 2017–2018) is representative enough to generalise to similar markets; European or non-English-speaking markets may show different patterns.
+  - Minimum price is the most consumer-relevant price point (what a fan would actually pay for a standard ticket).
 
 ### 1.2 Integration Logic
 

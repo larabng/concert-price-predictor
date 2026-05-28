@@ -247,8 +247,7 @@ def tab_insights():
     with c3:
         fig = px.scatter(
             df[df["minprice"] <= 400], x="score", y="minprice",
-            color="genre", opacity=0.5, trendline="ols",
-            labels={"score": "Artist Popularity Score", "minprice": "Price (USD)"},
+            color="genre", opacity=0.5,            labels={"score": "Artist Popularity Score", "minprice": "Price (USD)"},
             title="Artist Score vs Ticket Price",
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -293,16 +292,14 @@ def tab_insights():
         with c5:
             fig = px.scatter(
                 df[df["minprice"] <= 400], x="sentiment_score", y="minprice",
-                opacity=0.4, trendline="ols",
-                title="Keyword Sentiment vs Price",
+                opacity=0.4,                title="Keyword Sentiment vs Price",
                 labels={"sentiment_score": "Sentiment Score", "minprice": "Price (USD)"},
             )
             st.plotly_chart(fig, use_container_width=True)
         with c6:
             fig = px.scatter(
                 df[df["minprice"] <= 400], x="hype_score", y="minprice",
-                opacity=0.4, trendline="ols",
-                title="Hype Score vs Price",
+                opacity=0.4,                title="Hype Score vs Price",
                 labels={"hype_score": "Hype Score", "minprice": "Price (USD)"},
             )
             st.plotly_chart(fig, use_container_width=True)

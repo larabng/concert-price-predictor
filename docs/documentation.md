@@ -228,13 +228,24 @@ See [`notebooks/04_cv_evaluation.ipynb`](../notebooks/04_cv_evaluation.ipynb).
 
 #### 2C.5 Evaluation and Error Analysis
 
-- **Metrics and visual checks:** Top-1 accuracy on 12 artists with known genres (from Wikipedia thumbnails). Visual inspection of misclassified images. Expected accuracy: 50–70% for zero-shot classification.
-- **Final results:** See `notebooks/04_cv_evaluation.ipynb` for full results table and artist thumbnail grid.
+- **Metrics and visual checks:** Top-1 accuracy on 6 artists with available Wikipedia thumbnails and known genres (local CLIP model, `openai/clip-vit-base-patch32`).
+- **Final results:** **Top-1 accuracy: 50% (3/6 correct)**
+
+| Artist | True genre | Predicted | Conf. | Correct |
+|---|---|---|---|---|
+| Taylor Swift | Rock | Pop | 71% | ✗ (debatable — widely categorised as Pop) |
+| Metallica | Metal | Metal | 53% | ✓ |
+| Eminem | Hip-Hop/Rap | Hip-Hop/Rap | 49% | ✓ |
+| Imagine Dragons | Rock | Metal | 43% | ✗ (rock/metal boundary) |
+| Adele | R&B | Pop | 84% | ✗ (debatable — widely categorised as Pop/Soul) |
+| The Chainsmokers | Dance/Electronic | Dance/Electronic | 62% | ✓ |
+
 - **Error patterns and limitations:**
-  - Wikipedia thumbnails are often headshots (no genre-specific visual cues like instruments or costumes) → reduces CLIP accuracy for artists whose portrait gives no genre signal.
-  - Genre labels in our dataset are sometimes inconsistent (Taylor Swift is listed as "Rock" in the training data but is widely categorised as "Pop") → mismatches are not always CLIP errors.
-  - Zero-shot accuracy is lower than a fine-tuned model; a dedicated artist-photo classifier fine-tuned on genre-labelled images would outperform this approach.
-  - The CV block is most useful for clearly distinct genres (Metal bands vs Country singers look different); it is less reliable for Pop vs R&B.
+  - All three "wrong" predictions are genre boundary cases: Taylor Swift and Adele are labelled Rock/R&B in the training data but are widely classified as Pop — CLIP's prediction arguably reflects the more common interpretation.
+  - Imagine Dragons (Rock vs Metal) is a close boundary; their visual aesthetic overlaps with metal acts.
+  - Wikipedia thumbnails are often headshots with no genre-specific visual cues (no instruments, costumes, or stage context) → reduces CLIP accuracy.
+  - 50% accuracy matches the lower bound of the expected 50–70% zero-shot range and is consistent with the inherent difficulty of classifying genre from portrait photos alone.
+  - A fine-tuned model on genre-labelled concert photos would significantly outperform this zero-shot baseline.
 
 #### 2C.6 Integration with Other Block(s)
 

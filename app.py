@@ -31,6 +31,7 @@ from data_loader import load_data
 from model import MODEL_DIR, build_feature_matrix, get_feature_importances, load_model, train_models
 from nlp_features import compare_approaches, enrich_with_nlp
 from predict import predict_price
+from llm_explanation import generate_llm_explanation
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -186,7 +187,19 @@ def tab_predictor():
 
         st.markdown("---")
         st.subheader("Why this price?")
-        st.markdown(result["explanation"])
+
+        llm_text = generate_llm_explanation(
+            artist=artist,
+            predicted_price=price,
+            top_features=result["feature_importances"],
+            bio=bio,
+        )
+        if llm_text:
+            st.markdown(llm_text)
+            with st.expander("Technical breakdown (ML feature importances)"):
+                st.markdown(result["explanation"])
+        else:
+            st.markdown(result["explanation"])
 
         st.subheader("Top Feature Importances")
         imp = result["feature_importances"]

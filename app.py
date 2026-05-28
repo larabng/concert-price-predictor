@@ -436,6 +436,162 @@ def tab_insights():
 
 
 # ---------------------------------------------------------------------------
+# Tab 2 — Budget Planner
+# ---------------------------------------------------------------------------
+
+def tab_budget_planner():
+    st.header("💰 Concert Budget Planner")
+    st.markdown(
+        "Enter your budget in CHF — the app scans **all genre × month combinations** "
+        "across three city sizes and shows which concerts fit your wallet. "
+        "Powered by the ML model (Source 1) and live exchange rate (Source 3)."
+    )
+
+    rate = get_usd_to_chf()
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        budget_chf = st.slider("Your budget (CHF)", min_value=20, max_value=500,
+                               value=80, step=5)
+    with col2:
+        weekend = st.checkbox("Weekend events only", value=False)
+    with col3:
+        score = st.slider("Artist popularity (0 = unknown, 100 = superstar)",
+                          min_value=65, max_value=100, value=80)
+
+    # Generate prediction grid: genre × month × city_size
+    try:
+        model, encoders = get_model("XGB_nlp")
+    except Exception:
+        st.warning("Train models first via the Price Predictor tab.")
+        return
+
+    city_sizes = {
+        "Small (~100K)": 100_000,
+        "Large (~800K)": 800_000,
+        "Mega (~3M)":  3_000_000,
+    }
+    months_short = {6:"Jun", 7:"Jul", 8:"Aug", 9:"Sep", 10:"Oct", 4:"Apr", 5:"May"}
+
+    rows = []
+    for genre in GENRES[:-1]:  # skip "Other"
+        for month, mname in months_short.items():
+            for city_label, pop in city_sizes.items():
+                rows.append({
+                    "genre": genre, "month": month, "month_name": mname,
+                    "pop": pop, "city_label": city_label,
+                    "weekend": int(weekend), "score": float(score),
+                    "sentiment_score": 0.4, "hype_score": 0.4,
+                })
+
+    grid_df = pd.DataFrame(rows)
+
+    from model import build_feature_matrix as bfm, LOG_TARGET
+    X, _ = bfm(grid_df, include_nlp=True, fit_encoders=False, encoders=encoders)
+    expected = model.feature_names_in_ if hasattr(model, "feature_names_in_") else X.columns
+    for col in expected:
+        if col not in X.columns:
+            X[col] = 0
+    X = X[list(expected)]
+
+    raw = model.predict(X)
+    grid_df["pred_usd"] = np.expm1(raw) if LOG_TARGET else raw
+    grid_df["pred_chf"] = (grid_df["pred_usd"] * rate).round(0).astype(int)
+    grid_df["fits"] = grid_df["pred_chf"] <= budget_chf
+
+    # ── Heatmap: Genre × Month for Large city ────────────────────────────────
+    st.subheader(f"Price Heatmap — Large City (~800K), {'Weekend' if weekend else 'Weekday'}")
+    st.caption(f"Budget: CHF {budget_chf} | Green = within budget | Red = over budget")
+
+    large = grid_df[grid_df["city_label"] == "Large (~800K)"].copy()
+    pivot = large.pivot(index="genre", columns="month_name", values="pred_chf")
+    month_order = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"]
+    pivot = pivot[[m for m in month_order if m in pivot.columns]]
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+    vmin, vmax = 20, min(400, grid_df["pred_chf"].quantile(0.95))
+    cmap = plt.cm.RdYlGn_r
+    im = ax.imshow(pivot.values, cmap=cmap, vmin=vmin, vmax=vmax, aspect="auto")
+
+    ax.set_xticks(range(len(pivot.columns)))
+    ax.set_xticklabels(pivot.columns, fontsize=10)
+    ax.set_yticks(range(len(pivot.index)))
+    ax.set_yticklabels(pivot.index, fontsize=9)
+
+    for i in range(len(pivot.index)):
+        for j in range(len(pivot.columns)):
+            val = pivot.values[i, j]
+            color = "white" if val > budget_chf else "black"
+            marker = "✓" if val <= budget_chf else f"{int(val)}"
+            ax.text(j, i, marker, ha="center", va="center", fontsize=8,
+                    color=color, fontweight="bold" if val <= budget_chf else "normal")
+
+    plt.colorbar(im, ax=ax, label="Predicted min. price (CHF)")
+    ax.set_title(f"Predicted Ticket Prices — ✓ = within your CHF {budget_chf} budget")
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close(fig)
+
+    # ── Best matches ─────────────────────────────────────────────────────────
+    fits = grid_df[grid_df["fits"]].sort_values("pred_chf", ascending=False)
+    st.subheader(f"Best Matches within CHF {budget_chf}")
+
+    if fits.empty:
+        st.error("No combinations fit your budget. Try increasing it.")
+    else:
+        summary = (
+            fits.groupby(["genre", "city_label"])["pred_chf"]
+            .mean().round(0).astype(int).reset_index()
+            .rename(columns={"pred_chf": "Avg predicted price (CHF)",
+                              "genre": "Genre", "city_label": "City size"})
+            .sort_values("Avg predicted price (CHF)", ascending=False)
+        )
+        st.dataframe(summary, use_container_width=True)
+
+        # GPT recommendation
+        top_combos = fits.nsmallest(3, "pred_chf")[["genre","month_name","city_label","pred_chf"]]
+        combos_text = "; ".join(
+            f"{r.genre} in {r.city_label} in {r.month_name} (~CHF {r.pred_chf})"
+            for _, r in top_combos.iterrows()
+        )
+
+        if st.button("Get AI recommendation 🤖"):
+            from llm_explanation import _get_openai_key
+            key = _get_openai_key()
+            if key:
+                try:
+                    from openai import OpenAI
+                    client = OpenAI(api_key=key)
+                    prompt = (
+                        f"A concert fan has a budget of CHF {budget_chf} for a concert ticket. "
+                        f"Based on ML predictions, these combinations fit their budget: {combos_text}. "
+                        f"Write 2 friendly sentences recommending the best option and why."
+                    )
+                    resp = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=100, temperature=0.6,
+                    )
+                    st.info("💡 " + resp.choices[0].message.content.strip())
+                except Exception as e:
+                    st.warning(f"AI recommendation unavailable: {e}")
+            else:
+                st.warning("OpenAI key not configured.")
+
+    # ── City comparison bar chart ─────────────────────────────────────────────
+    st.subheader("Price vs City Size — July, Most Popular Genre per City")
+    city_avg = grid_df[grid_df["month"] == 7].groupby("city_label")["pred_chf"].mean().reset_index()
+    fig2 = px.bar(city_avg, x="city_label", y="pred_chf", color="pred_chf",
+                  color_continuous_scale="RdYlGn_r",
+                  labels={"pred_chf": "Avg predicted price (CHF)", "city_label": "City size"},
+                  title="July concerts: average predicted price by city size")
+    fig2.add_hline(y=budget_chf, line_dash="dash", line_color="green",
+                   annotation_text=f"Your budget: CHF {budget_chf}")
+    fig2.update_layout(showlegend=False)
+    st.plotly_chart(fig2, use_container_width=True)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -452,11 +608,13 @@ def main():
         "· [Wikipedia artist bios](https://en.wikipedia.org/api/rest_v1/)"
     )
 
-    tab1, tab2 = st.tabs(["🎟️ Price Predictor", "📊 Model Insights"])
+    tab1, tab2, tab3 = st.tabs(["🎟️ Price Predictor", "💰 Budget Planner", "📊 Model Insights"])
 
     with tab1:
         tab_predictor()
     with tab2:
+        tab_budget_planner()
+    with tab3:
         tab_insights()
 
 

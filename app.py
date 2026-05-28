@@ -125,13 +125,20 @@ def tab_predictor():
             with col_img:
                 st.image(img, width=200)
             with col_result:
+                cv_error = None
                 with st.spinner("CLIP is analysing the image…"):
-                    cv_genre, cv_conf = classify_genre(img_bytes)  # reuse same bytes
+                    try:
+                        cv_genre, cv_conf = classify_genre(img_bytes)
+                    except Exception as e:
+                        cv_genre, cv_conf = None, None
+                        cv_error = str(e)
                 if cv_genre:
                     st.success(f"Detected genre: **{cv_genre}** ({cv_conf:.0%} confidence)")
-                    st.caption("The genre field below has been pre-filled. You can change it if needed.")
+                    st.caption("Genre field pre-filled below — change if needed.")
+                elif cv_error:
+                    st.error(f"CLIP error: {cv_error}")
                 else:
-                    st.warning("Genre detection unavailable — check HF_TOKEN secret or select genre manually.")
+                    st.warning("Genre detection unavailable (HF token or API issue). Select genre manually.")
 
     with st.form("predictor_form"):
         col1, col2, col3 = st.columns(3)
@@ -630,8 +637,9 @@ def main():
     )
     st.markdown(
         "**Data sources:** "
-        "[Ticketmaster concert prices](https://github.com/ethanjaredlee/ticketmaster-price-ml) "
-        "· [Wikipedia artist bios](https://en.wikipedia.org/api/rest_v1/)"
+        "[1 · Ticketmaster concert prices](https://github.com/ethanjaredlee/ticketmaster-price-ml) "
+        "· [2 · Wikipedia artist bios & photos](https://en.wikipedia.org/api/rest_v1/) "
+        "· [3 · Frankfurter exchange rate API](https://api.frankfurter.app) (USD→CHF, live)"
     )
 
     tab1, tab2, tab3 = st.tabs(["🎟️ Price Predictor", "💰 Budget Planner", "📊 Model Insights"])

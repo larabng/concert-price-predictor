@@ -24,7 +24,7 @@ try:
 except ImportError:
     TRANSFORMER_AVAILABLE = False
 
-SRC = Path(__file__).resolve().parent.parent / "src"
+SRC = Path(__file__).resolve().parent / "src"
 sys.path.insert(0, str(SRC))
 
 from data_loader import load_data

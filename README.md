@@ -3,9 +3,8 @@ title: Concert Ticket Price Predictor
 emoji: 🎵
 colorFrom: blue
 colorTo: purple
-sdk: streamlit
-sdk_version: 1.44.0
-app_file: app/streamlit_app.py
+sdk: docker
+app_port: 7860
 pinned: false
 ---
 

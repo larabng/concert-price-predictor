@@ -208,13 +208,13 @@ See the full pipeline in [`src/predict.py`, lines 45–80](../src/predict.py#L45
 
 #### 2C.2 Preprocessing and Augmentation
 
-- **Image preprocessing:** All images are converted to RGB, resized to 224×224 pixels using LANCZOS resampling, and JPEG-encoded before being sent to the CLIP API. See [`src/cv_classifier.py`, `preprocess_image()`](../src/cv_classifier.py).
+- **Image preprocessing:** All images are converted to RGB and passed as PIL Images to the `CLIPProcessor`, which handles resizing and normalisation internally. See [`src/cv_classifier.py`, `preprocess_image()`](../src/cv_classifier.py).
 - **Augmentation:** Not applied — zero-shot classification with CLIP does not require augmentation. The model generalises across image styles through its large-scale pretraining on web-crawled image-text pairs.
 
 #### 2C.3 Model Selection
 
-- **Vision model used:** `openai/clip-vit-base-patch32` (CLIP — Contrastive Language-Image Pretraining), applied via HuggingFace Inference API (zero-shot image classification).
-- **Why this model:** CLIP was chosen because it supports zero-shot classification — no labelled training dataset is required. Given the genre taxonomy of our project (8 genres matching the ML training data), CLIP can classify artist photos using natural-language genre descriptions as prompts without fine-tuning. This also avoids the need for a large local model on the deployment server.
+- **Vision model used:** `openai/clip-vit-base-patch32` (CLIP — Contrastive Language-Image Pretraining), loaded locally via the `transformers` library (zero-shot image classification). The model weights (~350 MB) are downloaded from the HuggingFace Model Hub on first use and cached in the deployment environment; no HF Inference API token is required.
+- **Why this model:** CLIP was chosen because it supports zero-shot classification — no labelled training dataset is required. Given the genre taxonomy of our project (8 genres matching the ML training data), CLIP can classify artist photos using natural-language genre descriptions as prompts without fine-tuning. Running the model locally (via `CLIPModel` + `CLIPProcessor`) avoids dependency on the HF Inference API and ensures reliable inference in the HF Spaces deployment.
 
 #### 2C.4 Model Comparison and Iterations
 

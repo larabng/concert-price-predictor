@@ -248,6 +248,7 @@ See [`src/cv_classifier.py`](../src/cv_classifier.py) and [`app.py`, `tab_predic
 ## 3. Deployment
 
 - **Deployment URL:** https://huggingface.co/spaces/banlar01/concert-price-predictor
+- **Training / inference separation:** Model training runs offline via `src/model.py` and `notebooks/03_modeling.ipynb`; the four trained models are saved to `data/models/` and loaded at inference time by `src/predict.py`. The deployed app performs only inference — no training happens at runtime. On first launch the app auto-trains if `data/models/` is absent (fallback only).
 - **Main user flow:**
   1. User enters artist name, genre, city size, month, weekend flag, popularity score
   2. User optionally edits the artist Wikipedia bio in the text area

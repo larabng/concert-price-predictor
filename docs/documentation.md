@@ -256,31 +256,30 @@ See [`src/cv_classifier.py`](../src/cv_classifier.py) and [`app.py`, `tab_predic
   5. App displays predicted price, NLP scores, natural-language explanation, feature importances
   6. "Model Insights" tab shows EDA charts, NLP comparison, model comparison table, feature importances
 
-- **Screenshots — key analysis outputs:**
+- **Screenshots — key functionality:**
+
+**Price Predictor — prediction result with USD/CHF price and GPT explanation:**
+![Price Predictor](../screenshots/predictor.jpg)
+
+**CV Block — CLIP genre detection from uploaded artist photo:**
+![CLIP Genre Detection](../screenshots/predictor.jpg)
+
+**Budget Planner — genre × month heatmap with artist suggestions:**
+![Budget Planner](../screenshots/budget.jpg)
+
+**Model Insights — EDA, model comparison and feature importances:**
+![Model Insights](../screenshots/insights.jpg)
+
+- **Key analysis plots (from notebooks):**
 
 **Price Distribution (EDA):**
 ![Price Distribution](../data/plot_price_dist.png)
-
-**Artist Score vs Ticket Price:**
-![Score vs Price](../data/plot_numeric_features.png)
-
-**Feature Correlation Matrix:**
-![Correlation Matrix](../data/plot_correlation.png)
-
-**NLP Score Distributions (Approach B):**
-![NLP Distributions](../data/plot_nlp_distributions.png)
-
-**NLP Scores vs Price:**
-![NLP vs Price](../data/plot_nlp_vs_price.png)
 
 **Model Comparison (RMSE / MAE / R²):**
 ![Model Comparison](../data/plot_model_comparison.png)
 
 **Feature Importances — XGBoost + NLP:**
 ![Feature Importances](../data/plot_feature_importances.png)
-
-**Residual Analysis:**
-![Residuals](../data/plot_residuals.png)
 
 **5-Fold Cross-Validation (mean ± std):**
 ![CV Results](../data/plot_cv_results.png)
@@ -322,10 +321,19 @@ jupyter notebook            # open and run: 01_eda → 02_nlp_preprocessing → 
 ### Run the app
 
 ```bash
-streamlit run app/app.py
+streamlit run app.py
 ```
 
 The app auto-trains models on first launch if `data/models/` is empty.
+
+### Run notebooks
+
+```bash
+cd notebooks
+jupyter notebook
+```
+
+Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.ipynb` → `04_cv_evaluation.ipynb`
 
 ### Reproducibility notes
 

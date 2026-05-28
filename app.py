@@ -631,15 +631,34 @@ def tab_budget_planner():
 def main():
     st.title("🎵 Concert Ticket Price Predictor")
     st.markdown(
-        "> Combines **ML on structured concert data** (Random Forest & XGBoost) "
-        "with **NLP analysis of Wikipedia artist biographies** (DistilBERT & keyword heuristic) "
-        "to predict minimum ticket prices in USD."
+        "**Wondering if your concert ticket is fairly priced — or planning what you can afford?**  \n"
+        "This app predicts minimum ticket prices for US concerts and helps you find events that fit your budget."
     )
-    st.markdown(
-        "**Data sources:** "
-        "[1 · Ticketmaster concert prices](https://github.com/ethanjaredlee/ticketmaster-price-ml) "
-        "· [2 · Wikipedia artist bios & photos](https://en.wikipedia.org/api/rest_v1/) "
-        "· [3 · Frankfurter exchange rate API](https://api.frankfurter.app) (USD→CHF, live)"
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.info(
+            "**🎟️ Price Predictor**\n\n"
+            "Enter an artist, genre, city size and month.  \n"
+            "Optionally upload a photo — the app detects the genre automatically.  \n"
+            "Get a price estimate in USD & CHF plus a plain-English explanation."
+        )
+    with c2:
+        st.info(
+            "**💰 Budget Planner**\n\n"
+            "Set your budget in CHF.  \n"
+            "See a heatmap of which genres and months are within reach, real artist suggestions, and a GPT-powered recommendation."
+        )
+    with c3:
+        st.info(
+            "**📊 Model Insights**\n\n"
+            "Explore the training data, compare ML models (Random Forest vs XGBoost), see how NLP features improve predictions, and inspect feature importances."
+        )
+
+    st.caption(
+        "Data: [Ticketmaster concert prices](https://github.com/ethanjaredlee/ticketmaster-price-ml) "
+        "· [Wikipedia artist bios & photos](https://en.wikipedia.org/api/rest_v1/) "
+        "· [Frankfurter exchange rate API](https://api.frankfurter.app) (USD→CHF, live)"
     )
 
     tab1, tab2, tab3 = st.tabs(["🎟️ Price Predictor", "💰 Budget Planner", "📊 Model Insights"])

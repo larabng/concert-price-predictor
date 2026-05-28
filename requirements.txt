@@ -8,6 +8,7 @@ matplotlib>=3.7
 seaborn>=0.13
 joblib>=1.3
 tqdm>=4.66
+statsmodels>=0.14
 # transformers and torch are optional (Approach A / DistilBERT).
 # Install locally with: pip install transformers torch
 # Not required for the default keyword-based Approach B.

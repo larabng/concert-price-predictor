@@ -32,6 +32,7 @@ from model import MODEL_DIR, build_feature_matrix, get_feature_importances, load
 from nlp_features import compare_approaches, enrich_with_nlp
 from predict import predict_price
 from llm_explanation import generate_llm_explanation
+from cv_classifier import classify_genre
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -103,17 +104,39 @@ def get_model(name: str = "XGB_nlp"):
 def tab_predictor():
     st.header("🎟️ Concert Ticket Price Predictor")
     st.markdown(
-        "Enter the concert details below. The AI model combines **structured event data** "
-        "(Source 1) with **NLP analysis of the artist's Wikipedia biography** (Source 2) "
-        "to estimate the minimum ticket price."
+        "Combines **structured event data** (ML block), "
+        "**Wikipedia artist biography** (NLP block), and "
+        "**artist photo genre detection** (CV block) to estimate the minimum ticket price."
     )
+
+    # ── CV Block: optional photo upload ──────────────────────────────────────
+    with st.expander("📷 Step 1 (optional): Upload an artist photo for automatic genre detection"):
+        st.caption("CLIP (ViT-B/32) classifies the image into a music genre, which pre-fills the genre field below.")
+        uploaded_img = st.file_uploader("Artist or concert photo", type=["jpg", "jpeg", "png"], key="cv_upload")
+        cv_genre, cv_conf = None, None
+        if uploaded_img is not None:
+            from PIL import Image as PILImage
+            img = PILImage.open(uploaded_img)
+            col_img, col_result = st.columns([1, 2])
+            with col_img:
+                st.image(img, width=200)
+            with col_result:
+                with st.spinner("CLIP is analysing the image…"):
+                    cv_genre, cv_conf = classify_genre(uploaded_img.getvalue())
+                if cv_genre:
+                    st.success(f"Detected genre: **{cv_genre}** ({cv_conf:.0%} confidence)")
+                    st.caption("The genre field below has been pre-filled. You can change it if needed.")
+                else:
+                    st.warning("Genre detection unavailable (HF token needed). Please select genre manually.")
 
     with st.form("predictor_form"):
         col1, col2, col3 = st.columns(3)
 
         with col1:
             artist = st.text_input("Artist / Band name", value="Taylor Swift")
-            genre = st.selectbox("Genre", GENRES, index=0)
+            cv_default = GENRES.index(cv_genre) if cv_genre in GENRES else 0
+            genre = st.selectbox("Genre", GENRES, index=cv_default,
+                                 help="Pre-filled by CV block if a photo was uploaded above.")
             city_label = st.selectbox("City size", list(CITY_SIZES.keys()), index=3)
             pop = CITY_SIZES[city_label]
 

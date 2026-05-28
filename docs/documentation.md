@@ -45,7 +45,7 @@ Reference to multiple lines in `train.py`, lines 15-38:
 
 - [x] ML Numeric Data
 - [x] NLP
-- [ ] Computer Vision
+- [x] Computer Vision
 
 **Primary block 1:** ML Numeric Data  
 **Primary block 2:** NLP
@@ -196,6 +196,52 @@ See [`notebooks/02_nlp_preprocessing.ipynb`, Section 8](../notebooks/02_nlp_prep
 
 See the full pipeline in [`src/predict.py`, lines 45–80](../src/predict.py#L45-L80).
 
+### 2C. Computer Vision (Selected)
+
+#### 2C.1 Data Source(s)
+
+| Entry | Source name or link | Type | Size | Role in this block |
+| --- | --- | --- | --- | --- |
+| 1 | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) (thumbnail images) | Images (JPEG/PNG) | 12 artist thumbnails for evaluation | Input images for CLIP genre classification and visual inspection |
+| 2 | User-uploaded artist/concert photos (runtime) | Images (JPEG/PNG) | Ad-hoc (one per prediction) | Live input for genre detection in the deployed app |
+
+#### 2C.2 Preprocessing and Augmentation
+
+- **Image preprocessing:** All images are converted to RGB, resized to 224×224 pixels using LANCZOS resampling, and JPEG-encoded before being sent to the CLIP API. See [`src/cv_classifier.py`, `preprocess_image()`](../src/cv_classifier.py).
+- **Augmentation:** Not applied — zero-shot classification with CLIP does not require augmentation. The model generalises across image styles through its large-scale pretraining on web-crawled image-text pairs.
+
+#### 2C.3 Model Selection
+
+- **Vision model used:** `openai/clip-vit-base-patch32` (CLIP — Contrastive Language-Image Pretraining), applied via HuggingFace Inference API (zero-shot image classification).
+- **Why this model:** CLIP was chosen because it supports zero-shot classification — no labelled training dataset is required. Given the genre taxonomy of our project (8 genres matching the ML training data), CLIP can classify artist photos using natural-language genre descriptions as prompts without fine-tuning. This also avoids the need for a large local model on the deployment server.
+
+#### 2C.4 Model Comparison and Iterations
+
+| Iteration | Objective | Key changes | Model(s) used | Main metric | Change vs previous |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Zero-shot baseline | CLIP with 8 genre text prompts | openai/clip-vit-base-patch32 via HF API | Top-1 accuracy on 12 artists | — |
+| 2 | Improve prompts | Replaced single-word labels with descriptive sentences (e.g. "a rock music band performing on stage with electric guitars") | openai/clip-vit-base-patch32 | Top-1 accuracy | More specific prompts yield higher confidence scores |
+| 3 | Integration into app | CV output pre-fills genre dropdown in Price Predictor | Same model | UX + integration quality | Smooth integration: user can accept or override predicted genre |
+
+See [`notebooks/04_cv_evaluation.ipynb`](../notebooks/04_cv_evaluation.ipynb).
+
+#### 2C.5 Evaluation and Error Analysis
+
+- **Metrics and visual checks:** Top-1 accuracy on 12 artists with known genres (from Wikipedia thumbnails). Visual inspection of misclassified images. Expected accuracy: 50–70% for zero-shot classification.
+- **Final results:** See `notebooks/04_cv_evaluation.ipynb` for full results table and artist thumbnail grid.
+- **Error patterns and limitations:**
+  - Wikipedia thumbnails are often headshots (no genre-specific visual cues like instruments or costumes) → reduces CLIP accuracy for artists whose portrait gives no genre signal.
+  - Genre labels in our dataset are sometimes inconsistent (Taylor Swift is listed as "Rock" in the training data but is widely categorised as "Pop") → mismatches are not always CLIP errors.
+  - Zero-shot accuracy is lower than a fine-tuned model; a dedicated artist-photo classifier fine-tuned on genre-labelled images would outperform this approach.
+  - The CV block is most useful for clearly distinct genres (Metal bands vs Country singers look different); it is less reliable for Pop vs R&B.
+
+#### 2C.6 Integration with Other Block(s)
+
+- **Inputs received from other block(s):** Artist name from the ML/data block is used to fetch the Wikipedia thumbnail for evaluation (same API endpoint as Source 2 Wikipedia bios).
+- **Outputs provided to other block(s):** The predicted genre label is passed directly to the ML Price Predictor as the `genre` feature, pre-filling the dropdown in the app UI. The user can override the prediction before running inference.
+
+See [`src/cv_classifier.py`](../src/cv_classifier.py) and [`app.py`, `tab_predictor()`](../app.py).
+
 ---
 
 ## 3. Deployment
@@ -289,7 +335,7 @@ The app auto-trains models on first launch if `data/models/` is empty.
 
 ## 5. Optional Bonus Evidence
 
-- [ ] Third selected block implemented with strong quality
+- [x] Third selected block implemented with strong quality — Computer Vision (CLIP zero-shot genre classification)
 - [x] More than two data sources used with clear added value
 - [x] A core section is done exceptionally well — NLP with three approaches (DistilBERT / keyword / GPT-3.5-turbo)
 - [ ] Extended evaluation

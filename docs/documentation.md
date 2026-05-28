@@ -29,14 +29,14 @@ Reference to multiple lines in `train.py`, lines 15-38:
 - **Project title:** Concert Ticket Price Predictor
 - **Student:** Lara Bangerter (Banlar01)
 - **GitHub repository URL:** https://github.com/larabng/concert-price-predictor
-- **Deployment URL:** [Add after deploying to Streamlit Cloud]
+- **Deployment URL:** https://huggingface.co/spaces/banlar01/concert-price-predictor
 - **Submission date:** 07 June 2026
 
 ### Mandatory Setup Checks
 
 - [x] At least 2 blocks selected
 - [x] Multiple and different data sources used
-- [ ] Deployment URL provided ← add after deployment
+- [x] Deployment URL provided
 - [x] Required GitHub users added to repository (`jasminh`, `bkuehnis`)
 
 ---
@@ -193,7 +193,7 @@ See the full pipeline in [`src/predict.py`, lines 45–80](../src/predict.py#L45
 
 ## 3. Deployment
 
-- **Deployment URL:** [Add after deploying — see Streamlit Cloud instructions below]
+- **Deployment URL:** https://huggingface.co/spaces/banlar01/concert-price-predictor
 - **Main user flow:**
   1. User enters artist name, genre, city size, month, weekend flag, popularity score
   2. User optionally edits the artist Wikipedia bio in the text area

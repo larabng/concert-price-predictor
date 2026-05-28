@@ -138,7 +138,7 @@ Run in order: `01_eda.ipynb` → `02_nlp_preprocessing.ipynb` → `03_modeling.i
 
 ## Deployment
 
-Deployed at: **[add Streamlit Cloud URL here]**
+Deployed at: **https://huggingface.co/spaces/banlar01/concert-price-predictor**
 
 To deploy yourself:
 1. Push repo to GitHub

@@ -291,7 +291,7 @@ def tab_insights():
             labels={"minprice": "Price (USD)", "genre": "Genre"},
         )
         fig.update_layout(showlegend=False, xaxis_tickangle=-30)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="ins_genre_box")
 
     c3, c4 = st.columns(2)
 
@@ -301,7 +301,7 @@ def tab_insights():
             color="genre", opacity=0.5,            labels={"score": "Artist Popularity Score", "minprice": "Price (USD)"},
             title="Artist Score vs Ticket Price",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="ins_score_scatter")
 
     with c4:
         month_avg = df.groupby("month")["minprice"].median().reset_index()
@@ -312,7 +312,7 @@ def tab_insights():
             labels={"minprice": "Median Price (USD)", "month_name": "Month"},
             title="Median Price by Month",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="ins_month_bar")
 
     # Weekend vs weekday
     st.markdown("**Weekend vs Weekday Prices**")
@@ -346,14 +346,14 @@ def tab_insights():
                 opacity=0.4,                title="Keyword Sentiment vs Price",
                 labels={"sentiment_score": "Sentiment Score", "minprice": "Price (USD)"},
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="ins_sentiment")
         with c6:
             fig = px.scatter(
                 df[df["minprice"] <= 400], x="hype_score", y="minprice",
                 opacity=0.4,                title="Hype Score vs Price",
                 labels={"hype_score": "Hype Score", "minprice": "Price (USD)"},
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="ins_hype")
 
     # NLP approach comparison on sample artists
     st.subheader("4. NLP Approach Comparison: Transformer (A) vs Keyword (B)")
@@ -413,7 +413,7 @@ def tab_insights():
         text_auto=".1f",
     )
     fig.update_traces(textposition="outside")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="ins_rmse_bar")
 
     # Feature importances
     st.subheader("6. Feature Importances — XGBoost + NLP")
@@ -432,7 +432,7 @@ def tab_insights():
             color_continuous_scale="Teal",
         )
         fig.update_layout(showlegend=False, height=450, yaxis=dict(autorange="reversed"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="ins_feat_imp")
     except FileNotFoundError:
         st.warning("Train models first via the Price Predictor tab.")
 

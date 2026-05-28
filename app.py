@@ -33,6 +33,7 @@ from nlp_features import compare_approaches, enrich_with_nlp
 from predict import predict_price
 from llm_explanation import generate_llm_explanation
 from cv_classifier import classify_genre
+from exchange_rate import get_usd_to_chf, usd_to_chf
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -202,11 +203,15 @@ def tab_predictor():
                                         use_transformer=use_transformer)
 
         price = result["predicted_price"]
+        price_chf = usd_to_chf(price)
+        rate = get_usd_to_chf()
 
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Predicted Min. Ticket Price", f"${price:.0f}")
-        c2.metric("Bio Sentiment Score", f"{result['sentiment_score']:+.3f}")
-        c3.metric("Bio Hype Score", f"{result['hype_score']:.3f}")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Predicted Price (USD)", f"${price:.0f}")
+        c2.metric("Predicted Price (CHF)", f"CHF {price_chf:.0f}",
+                  help=f"Live rate: 1 USD = {rate:.4f} CHF (Source 3: Frankfurter API)")
+        c3.metric("Bio Sentiment Score", f"{result['sentiment_score']:+.3f}")
+        c4.metric("Bio Hype Score", f"{result['hype_score']:.3f}")
 
         st.markdown("---")
         st.subheader("Why this price?")

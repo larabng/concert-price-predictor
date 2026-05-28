@@ -90,6 +90,7 @@ See [`src/data_loader.py`](../src/data_loader.py) for the merge logic and [`src/
 | --- | --- | --- | --- | --- |
 | 1 | [Ticketmaster concert price dataset](https://github.com/ethanjaredlee/ticketmaster-price-ml/blob/master/data.csv) | CSV (structured) | 1,198 rows × 9 columns | Primary training data: event metadata + real minimum ticket prices (USD) |
 | 2 | [Wikipedia artist biographies](https://en.wikipedia.org/api/rest_v1/) (via REST API) | Text (unstructured) | 87 artist summaries | NLP-derived features: sentiment_score and hype_score per artist |
+| 3 | [Frankfurter Exchange Rate API](https://api.frankfurter.app/latest?from=USD&to=CHF) | JSON (live rate) | 1 value (USD→CHF) | Converts predicted USD price to CHF for display; fetched live at inference time |
 
 #### 2A.2 Preprocessing and Features
 
@@ -116,7 +117,7 @@ See *Model Training & Comparison* in [`notebooks/03_modeling.ipynb`](../notebook
 
 #### 2A.5 Evaluation and Error Analysis
 
-- **Metrics used:** RMSE (USD), MAE (USD), R² — standard regression metrics. RMSE penalises large outliers, important for VIP-tier ticket prices.
+- **Metrics used:** RMSE (USD), MAE (USD), R² — standard regression metrics. RMSE penalises large outliers, important for VIP-tier ticket prices. **Extended evaluation:** 5-fold cross-validation (KFold, shuffle=True, seed=42) provides mean ± std over 5 held-out folds for robustness. See [`notebooks/03_modeling.ipynb`, Section 10](../notebooks/03_modeling.ipynb).
 - **Final results** (log-target model, evaluated in original USD scale):
 
 | Model | RMSE (USD) | MAE (USD) | R² |
@@ -281,6 +282,9 @@ See [`src/cv_classifier.py`](../src/cv_classifier.py) and [`app.py`, `tab_predic
 **Residual Analysis:**
 ![Residuals](../data/plot_residuals.png)
 
+**5-Fold Cross-Validation (mean ± std):**
+![CV Results](../data/plot_cv_results.png)
+
 ---
 
 ## 4. Execution Instructions
@@ -336,9 +340,9 @@ The app auto-trains models on first launch if `data/models/` is empty.
 ## 5. Optional Bonus Evidence
 
 - [x] Third selected block implemented with strong quality — Computer Vision (CLIP zero-shot genre classification)
-- [x] More than two data sources used with clear added value
+- [x] More than two data sources used with clear added value — 3 sources: Ticketmaster CSV, Wikipedia REST API, Frankfurter Exchange Rate API
 - [x] A core section is done exceptionally well — NLP with three approaches (DistilBERT / keyword / GPT-3.5-turbo)
-- [ ] Extended evaluation
+- [x] Extended evaluation — 5-fold cross-validation with mean ± std for all 4 models
 - [x] Ethics, bias, or fairness analysis
 - [ ] Creative or exceptional use case
 
